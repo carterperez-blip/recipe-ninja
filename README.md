@@ -6,6 +6,8 @@ A personal recipe library for the browser and iPhone (install it from Safari wit
 - Find a picture from Pexels or Unsplash, with the photographer credited
 - Ingredients and step-by-step instructions with a picture on every recipe
 - Serving scaler: every recipe opens at 2 people
+- Cook mode: full screen, one step at a time, screen kept awake
+- Grocery list: add a recipe's scaled ingredients; matching items combine (2 cups + 4 tbsp of milk becomes one line); tick items off
 - US units by default with a metric toggle
 - Pastel look
 

@@ -35,12 +35,12 @@ export function canonicalUnit(word: string): string | null {
 }
 
 /** Millilitres per volume unit (US customary). */
-const ML: Record<string, number> = {
+export const ML: Record<string, number> = {
   tsp: 4.92892, tbsp: 14.7868, floz: 29.5735, cup: 236.588,
   pint: 473.176, quart: 946.353, gallon: 3785.41, ml: 1, l: 1000,
 };
 /** Grams per weight unit. */
-const GRAMS: Record<string, number> = { oz: 28.3495, lb: 453.592, g: 1, kg: 1000 };
+export const GRAMS: Record<string, number> = { oz: 28.3495, lb: 453.592, g: 1, kg: 1000 };
 
 /** Approximate grams per US cup for common ingredients (keys matched as substrings). */
 const DENSITY_G_PER_CUP: [string, number][] = [
@@ -123,7 +123,13 @@ export function toUS(a: Amount): Amount {
   return { quantity: lo.q, quantityMax: hi ? hi.q : null, unit: lo.unit };
 }
 
-/** Roll US kitchen units up or down so amounts stay readable (48 tsp -> 1 cup). */
+/** True when a quantity reads cleanly as a whole number, eighths or thirds ("5 tbsp" is not "⅓ cup"). */
+function isClean(x: number): boolean {
+  const near = (v: number) => Math.abs(v - Math.round(v)) < 0.04;
+  return near(x) || near(x * 8) || near(x * 3);
+}
+
+/** Roll US kitchen units up or down so amounts stay readable (48 tsp -> 1 cup), only when the result is exact. */
 export function smoothUS(a: Amount): Amount {
   let { quantity, quantityMax, unit } = a;
   const factor = (from: string, to: string) => ML[from] / ML[to];
@@ -131,8 +137,9 @@ export function smoothUS(a: Amount): Amount {
     quantity *= f;
     if (quantityMax != null) quantityMax *= f;
   };
-  if (unit === "tsp" && quantity >= 3) { step(1 / 3); unit = "tbsp"; }
-  if (unit === "tbsp" && quantity >= 4) { step(factor("tbsp", "cup")); unit = "cup"; }
+  const clean = (f: number) => isClean(quantity * f) && (quantityMax == null || isClean(quantityMax * f));
+  if (unit === "tsp" && quantity >= 3 && clean(1 / 3)) { step(1 / 3); unit = "tbsp"; }
+  if (unit === "tbsp" && quantity >= 4 && clean(factor("tbsp", "cup"))) { step(factor("tbsp", "cup")); unit = "cup"; }
   else if (unit === "tbsp" && quantity < 1) { step(3); unit = "tsp"; }
   if (unit === "cup" && quantity < 0.125) { step(16); unit = "tbsp"; }
   return { quantity, quantityMax, unit };

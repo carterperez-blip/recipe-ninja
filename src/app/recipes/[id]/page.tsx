@@ -6,6 +6,7 @@ import { RecipeImage } from "@/components/RecipeImage";
 import { displayIngredient, scaleFactor } from "@/lib/recipe/scale";
 import { convertTemperatures } from "@/lib/recipe/units";
 import { DEFAULT_SERVINGS, type Recipe } from "@/lib/recipe/types";
+import { addRecipeToGrocery } from "@/lib/groceryStore";
 import { deleteRecipe, patchRecipe, setUnitSystem, useHydrated, useRecipes, useUnitSystem } from "@/lib/store";
 
 export default function RecipePage() {
@@ -36,8 +37,15 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
   const router = useRouter();
   const system = useUnitSystem();
   const [people, setPeople] = useState(DEFAULT_SERVINGS);
+  const [groceryMsg, setGroceryMsg] = useState<string | null>(null);
   // Next keeps hidden pages alive; reset so every visit opens at the default number of people.
-  useLayoutEffect(() => () => setPeople(DEFAULT_SERVINGS), []);
+  useLayoutEffect(
+    () => () => {
+      setPeople(DEFAULT_SERVINGS);
+      setGroceryMsg(null);
+    },
+    [],
+  );
   const factor = scaleFactor(people, recipe.baseServings);
   const mins = (recipe.prepMinutes ?? 0) + (recipe.cookMinutes ?? 0);
 
@@ -144,6 +152,30 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <button
+              onClick={async () => {
+                try {
+                  const n = await addRecipeToGrocery(recipe.ingredients, factor, recipe.title);
+                  setGroceryMsg(n === 0 ? "Already on your list." : `Added to your grocery list for ${people} ${people === 1 ? "person" : "people"}.`);
+                } catch (e) {
+                  setGroceryMsg(e instanceof Error ? e.message : "Could not add to the list.");
+                }
+              }}
+              className="w-full rounded-full border-2 border-navy bg-surface py-2 text-sm font-semibold text-navy"
+            >
+              + Add to grocery list
+            </button>
+            {groceryMsg && (
+              <p className="text-sm" role="status">
+                {groceryMsg}{" "}
+                <Link href="/grocery" className="underline">
+                  View list
+                </Link>
+              </p>
+            )}
           </div>
 
           <ul className="space-y-2">

@@ -55,10 +55,20 @@ create table if not exists public.grocery_items (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null default auth.uid() references auth.users (id) on delete cascade,
   recipe_id  uuid references public.recipes (id) on delete set null,
-  text       text not null,
+  text       text not null,           -- plain-text version, for reading the table
+  name       text,                    -- item name without amounts
+  quantity   numeric,                 -- null when the item has no amount
+  unit       text,                    -- canonical unit key, null for counted items
+  recipes    text[] not null default '{}',  -- titles of the recipes it is for
   checked    boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+-- for projects created before the grocery list was built
+alter table public.grocery_items add column if not exists name text;
+alter table public.grocery_items add column if not exists quantity numeric;
+alter table public.grocery_items add column if not exists unit text;
+alter table public.grocery_items add column if not exists recipes text[] not null default '{}';
 alter table public.grocery_items enable row level security;
 drop policy if exists "grocery: owner full access" on public.grocery_items;
 create policy "grocery: owner full access" on public.grocery_items

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
-import { AccountMenu } from "@/components/AccountMenu";
+import { AccountFooter, AccountMenu } from "@/components/AccountMenu";
 import { AuthGate } from "@/components/AuthGate";
 import { Logo } from "@/components/Logo";
 
@@ -32,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
         </header>
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6"><AuthGate>{children}</AuthGate></main>
+        <AccountFooter />
       </body>
     </html>
   );
