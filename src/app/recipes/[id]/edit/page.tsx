@@ -22,7 +22,8 @@ function EditLoader() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Edit recipe</h1>
-      <RecipeForm initial={recipe} />
+      {/* key: a changed recipe (after a save, or from another device) gets a fresh form, not stale values */}
+      <RecipeForm key={JSON.stringify(recipe)} initial={recipe} />
     </div>
   );
 }

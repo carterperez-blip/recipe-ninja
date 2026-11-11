@@ -10,7 +10,7 @@ import { saveRecipe } from "@/lib/store";
 
 const label = "mb-1 block text-sm font-medium";
 
-export function RecipeForm({ initial }: { initial?: Recipe }) {
+export function RecipeForm({ initial, onSaved }: { initial?: Recipe; onSaved?: () => void }) {
   const router = useRouter();
   const [title, setTitle] = useState(initial?.title ?? "");
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? "");
@@ -54,6 +54,9 @@ export function RecipeForm({ initial }: { initial?: Recipe }) {
       tags: tagsText.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean),
       notes: notes.trim(),
       });
+      // Next keeps hidden pages alive, so clear this form before leaving it.
+      setSaving(false);
+      onSaved?.();
       router.push(`/recipes/${saved.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save the recipe.");

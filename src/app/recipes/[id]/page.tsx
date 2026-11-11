@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useLayoutEffect, useState } from "react";
 import { RecipeImage } from "@/components/RecipeImage";
 import { displayIngredient, scaleFactor } from "@/lib/recipe/scale";
 import { convertTemperatures } from "@/lib/recipe/units";
@@ -36,6 +36,8 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
   const router = useRouter();
   const system = useUnitSystem();
   const [people, setPeople] = useState(DEFAULT_SERVINGS);
+  // Next keeps hidden pages alive; reset so every visit opens at the default number of people.
+  useLayoutEffect(() => () => setPeople(DEFAULT_SERVINGS), []);
   const factor = scaleFactor(people, recipe.baseServings);
   const mins = (recipe.prepMinutes ?? 0) + (recipe.cookMinutes ?? 0);
 

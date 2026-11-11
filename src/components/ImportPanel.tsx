@@ -19,6 +19,17 @@ export function ImportPanel() {
   const [result, setResult] = useState<ApiOk | null>(null);
   const [formKey, setFormKey] = useState(0);
 
+  /** Next keeps hidden pages alive, so start the next visit from a clean slate. */
+  function resetAll() {
+    setMode("url");
+    setUrl("");
+    setText("");
+    setFiles([]);
+    setError(null);
+    setResult(null);
+    setFormKey((k) => k + 1);
+  }
+
   async function run() {
     setBusy(true);
     setError(null);
@@ -93,7 +104,7 @@ export function ImportPanel() {
             Start over
           </button>
         </div>
-        <RecipeForm key={formKey} initial={{ ...result.recipe }} />
+        <RecipeForm key={formKey} initial={{ ...result.recipe }} onSaved={resetAll} />
       </div>
     );
   }
@@ -108,7 +119,7 @@ export function ImportPanel() {
       </div>
 
       {mode === "manual" ? (
-        <RecipeForm />
+        <RecipeForm key={formKey} onSaved={resetAll} />
       ) : (
         <div className="space-y-3 rounded-2xl border border-line bg-surface p-4">
           {mode === "url" ? (
