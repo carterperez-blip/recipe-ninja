@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
+import { AccountMenu } from "@/components/AccountMenu";
+import { AuthGate } from "@/components/AuthGate";
 import { Logo } from "@/components/Logo";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -24,15 +26,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Logo className="h-9 w-9" />
               Recipe Ninja
             </Link>
-            <Link
-              href="/recipes/new"
-              className="rounded-full bg-lav-strong px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
-            >
-              + Add recipe
-            </Link>
+            <AccountMenu />
           </div>
         </header>
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
+        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6"><AuthGate>{children}</AuthGate></main>
       </body>
     </html>
   );

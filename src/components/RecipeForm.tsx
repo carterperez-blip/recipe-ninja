@@ -23,17 +23,21 @@ export function RecipeForm({ initial }: { initial?: Recipe }) {
   const [tagsText, setTagsText] = useState(initial?.tags.join(", ") ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const lines = (s: string) => s.split("\n").map((l) => l.trim()).filter(Boolean);
   const parsed = lines(ingredientsText).map(parseIngredientLine);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const base = Number(servings);
     if (!title.trim()) return setError("Please give the recipe a title.");
     if (parsed.length === 0) return setError("Add at least one ingredient.");
     if (!(base > 0)) return setError("Servings must be a number above 0.");
-    const saved = saveRecipe({
+    setSaving(true);
+    setError("");
+    try {
+      const saved = await saveRecipe({
       ...initial,
       title: title.trim(),
       imageUrl: imageUrl.trim() || null,
@@ -45,8 +49,12 @@ export function RecipeForm({ initial }: { initial?: Recipe }) {
       steps: lines(stepsText).map((text) => ({ text })),
       tags: tagsText.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean),
       notes: notes.trim(),
-    });
-    router.push(`/recipes/${saved.id}`);
+      });
+      router.push(`/recipes/${saved.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save the recipe.");
+      setSaving(false);
+    }
   }
 
   return (
@@ -114,8 +122,12 @@ export function RecipeForm({ initial }: { initial?: Recipe }) {
       </div>
       {error && <p role="alert" className="rounded-xl bg-peach px-3 py-2 text-sm">{error}</p>}
       <div className="flex gap-3">
-        <button className="rounded-full bg-lav-strong px-5 py-2 font-semibold text-white" type="submit">
-          Save recipe
+        <button
+          className="rounded-full bg-lav-strong px-5 py-2 font-semibold text-white disabled:opacity-50"
+          type="submit"
+          disabled={saving}
+        >
+          {saving ? "Saving…" : "Save recipe"}
         </button>
         <button type="button" onClick={() => router.back()} className="rounded-full border border-line bg-surface px-5 py-2">
           Cancel

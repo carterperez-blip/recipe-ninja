@@ -22,11 +22,13 @@ npm run dev      # http://localhost:3000
 npm test         # scaling, parsing and unit-conversion tests
 ```
 
-Until Supabase is connected, recipes are stored in the browser only.
+Without Supabase settings the app runs in local mode: no sign-in, recipes stored in this browser only (with two sample recipes). With `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` set, it shows a Google sign-in screen and stores recipes in your Supabase project.
 
 ## Set up the services
 
-1. **Supabase:** create a project, run `supabase/schema.sql` in the SQL editor, then turn on the Google provider under Authentication.
-2. **Google:** create an OAuth client and paste its ID and secret into Supabase's Google provider settings.
+1. **Supabase:** create a project and run `supabase/schema.sql` in the SQL editor.
+2. **Google:** in Google Cloud Console create an OAuth client (type Web application). Add Supabase's callback URL (shown on Supabase's Authentication > Providers > Google page) as an authorized redirect URI. Paste the client ID and secret into that Supabase page and enable Google.
+   - In Supabase Authentication > URL Configuration, set the Site URL to your Netlify address and add it, plus `http://localhost:3000`, to the redirect URLs.
+   - Sign in once with your own Google account, then turn off "Allow new users to sign up" (Authentication > Sign In / Providers) so nobody else can create an account.
 3. **Netlify:** add a site from this GitHub repo and set the variables listed in `.env.example`.
 4. **Anthropic:** create an API key and set `ANTHROPIC_API_KEY`.

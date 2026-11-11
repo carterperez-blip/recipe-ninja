@@ -86,3 +86,23 @@ describe("unit toggle", () => {
     expect(convertTemperatures("Bake at 180°C", "us")).toBe("Bake at 350°F");
   });
 });
+
+import { fromRow, toRow } from "./rows";
+describe("database row mapping", () => {
+  it("round-trips a recipe", () => {
+    const r = {
+      id: "abc", title: "T", sourceUrl: "https://x.com", imageUrl: null, baseServings: 4, prepMinutes: 5, cookMinutes: null,
+      ingredients: [parseIngredientLine("1 1/2 cups flour")], steps: [{ text: "Mix" }], tags: ["a"], notes: "n", rating: 3, favorite: true,
+    };
+    const row = toRow(r);
+    expect(row.base_servings).toBe(4);
+    expect(row.source_url).toBe("https://x.com");
+    expect(fromRow({ ...row, base_servings: "4" })).toEqual(r);
+  });
+  it("tolerates missing json columns", () => {
+    const r = fromRow({ id: "1", title: "T", source_url: null, image_url: null, base_servings: 2, prep_minutes: null, cook_minutes: null,
+      ingredients: null as never, steps: null as never, tags: null as never, notes: null, rating: null, favorite: false });
+    expect(r.ingredients).toEqual([]);
+    expect(r.notes).toBe("");
+  });
+});

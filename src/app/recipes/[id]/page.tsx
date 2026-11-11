@@ -167,10 +167,13 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
           Edit
         </Link>
         <button
-          onClick={() => {
-            if (confirm(`Delete "${recipe.title}"?`)) {
-              deleteRecipe(recipe.id!);
+          onClick={async () => {
+            if (!confirm(`Delete "${recipe.title}"?`)) return;
+            try {
+              await deleteRecipe(recipe.id!);
               router.push("/");
+            } catch (e) {
+              alert(e instanceof Error ? e.message : "Could not delete the recipe.");
             }
           }}
           className="rounded-full border border-line bg-surface px-4 py-2"

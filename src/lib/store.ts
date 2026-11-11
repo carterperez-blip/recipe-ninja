@@ -2,15 +2,22 @@
 import { useSyncExternalStore } from "react";
 import type { Recipe, UnitSystem } from "@/lib/recipe/types";
 import { parseIngredientLine } from "@/lib/recipe/parse";
+import { fromRow, toRow, type RecipeRow } from "@/lib/recipe/rows";
+import { getAuthState, subscribeAuth } from "@/lib/auth";
+import { getSupabase, isCloudConfigured } from "@/lib/supabase/client";
 
 /**
- * Browser-local recipe storage. This is the default until Supabase is connected;
- * the shape (Recipe) is the same, so swapping the backend only touches this file.
+ * Recipe storage with two backends behind the same functions:
+ *  - Supabase (when configured): your private library, synced across devices
+ *  - this browser's localStorage (when Supabase is not configured): local-only demo mode
  */
 const RECIPES_KEY = "recipe-ninja:recipes:v1";
 const UNITS_KEY = "recipe-ninja:units:v1";
 const listeners = new Set<() => void>();
+const notify = () => listeners.forEach((l) => l());
 const EMPTY: Recipe[] = [];
+
+/* ------------------------------ local backend ------------------------------ */
 
 function seed(): Recipe[] {
   const ing = (lines: string[]) => lines.map(parseIngredientLine);
@@ -72,15 +79,15 @@ function seed(): Recipe[] {
   ];
 }
 
-let cache: { raw: string | null; value: Recipe[] } = { raw: null, value: EMPTY };
+let localCache: { raw: string | null; value: Recipe[] } = { raw: null, value: EMPTY };
 
-function readRecipes(): Recipe[] {
+function readLocal(): Recipe[] {
   if (typeof window === "undefined") return EMPTY;
   let raw: string | null = null;
   try {
     raw = window.localStorage.getItem(RECIPES_KEY);
   } catch {
-    return cache.value;
+    return localCache.value;
   }
   if (raw === null) {
     const s = seed();
@@ -90,75 +97,163 @@ function readRecipes(): Recipe[] {
     } catch {
       /* private mode: keep in memory only */
     }
-    cache = { raw, value: s };
-    return cache.value;
+    localCache = { raw, value: s };
+    return localCache.value;
   }
-  if (raw !== cache.raw) {
+  if (raw !== localCache.raw) {
     try {
-      cache = { raw, value: JSON.parse(raw) as Recipe[] };
+      localCache = { raw, value: JSON.parse(raw) as Recipe[] };
     } catch {
-      cache = { raw, value: EMPTY };
+      localCache = { raw, value: EMPTY };
     }
   }
-  return cache.value;
+  return localCache.value;
 }
 
-function writeRecipes(next: Recipe[]) {
+function writeLocal(next: Recipe[]) {
   const raw = JSON.stringify(next);
-  cache = { raw, value: next };
+  localCache = { raw, value: next };
   try {
     window.localStorage.setItem(RECIPES_KEY, raw);
   } catch {
     /* ignore */
   }
-  listeners.forEach((l) => l());
+  notify();
+}
+
+/* ------------------------------ cloud backend ------------------------------ */
+
+interface CloudState {
+  recipes: Recipe[];
+  loaded: boolean;
+  error: string | null;
+}
+let cloud: CloudState = { recipes: EMPTY, loaded: false, error: null };
+let loadingFor: string | null = null;
+
+function setCloud(next: Partial<CloudState>) {
+  cloud = { ...cloud, ...next };
+  notify();
+}
+
+async function loadCloud() {
+  const supabase = getSupabase();
+  const auth = getAuthState();
+  if (!supabase || auth.status !== "signedIn") return;
+  loadingFor = auth.session.user.id;
+  const { data, error } = await supabase
+    .from("recipes")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (getAuthState().status !== "signedIn") return; // signed out while loading
+  if (error) setCloud({ loaded: true, error: `Could not load your recipes: ${error.message}` });
+  else setCloud({ recipes: (data as RecipeRow[]).map(fromRow), loaded: true, error: null });
+}
+
+let cloudStarted = false;
+function startCloud() {
+  if (cloudStarted || !isCloudConfigured || typeof window === "undefined") return;
+  cloudStarted = true;
+  const onAuth = () => {
+    const a = getAuthState();
+    if (a.status === "signedIn") {
+      if (loadingFor !== a.session.user.id) void loadCloud();
+    } else if (a.status === "signedOut") {
+      loadingFor = null;
+      setCloud({ recipes: EMPTY, loaded: false, error: null });
+    }
+  };
+  subscribeAuth(onAuth);
+  onAuth();
+  // pick up changes made on another device when you come back to this tab
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") void loadCloud();
+  });
 }
 
 function subscribe(cb: () => void) {
+  startCloud();
   listeners.add(cb);
-  window.addEventListener("storage", cb);
+  if (!isCloudConfigured) window.addEventListener("storage", cb);
   return () => {
     listeners.delete(cb);
-    window.removeEventListener("storage", cb);
+    if (!isCloudConfigured) window.removeEventListener("storage", cb);
   };
 }
 
+/* --------------------------------- hooks ---------------------------------- */
+
 export function useRecipes(): Recipe[] {
-  return useSyncExternalStore(subscribe, readRecipes, () => EMPTY);
+  return useSyncExternalStore(subscribe, isCloudConfigured ? () => cloud.recipes : readLocal, () => EMPTY);
 }
 
+/** True once recipes are ready to show (after sign-in and first load in cloud mode). */
 export function useHydrated(): boolean {
-  return useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
+  return useSyncExternalStore(subscribe, () => (isCloudConfigured ? cloud.loaded : true), () => false);
 }
 
-export function saveRecipe(recipe: Recipe): Recipe {
-  const all = readRecipes();
+export function useLoadError(): string | null {
+  return useSyncExternalStore(subscribe, () => cloud.error, () => null);
+}
+
+/* -------------------------------- mutations -------------------------------- */
+
+function requireClient() {
+  const supabase = getSupabase();
+  if (!supabase || getAuthState().status !== "signedIn") throw new Error("Please sign in first.");
+  return supabase;
+}
+
+export async function saveRecipe(recipe: Recipe): Promise<Recipe> {
   const withId = { ...recipe, id: recipe.id ?? crypto.randomUUID() };
-  const exists = all.some((r) => r.id === withId.id);
-  writeRecipes(exists ? all.map((r) => (r.id === withId.id ? withId : r)) : [withId, ...all]);
+  if (!isCloudConfigured) {
+    const all = readLocal();
+    const exists = all.some((r) => r.id === withId.id);
+    writeLocal(exists ? all.map((r) => (r.id === withId.id ? withId : r)) : [withId, ...all]);
+    return withId;
+  }
+  const { error } = await requireClient().from("recipes").upsert(toRow(withId));
+  if (error) throw new Error(error.message);
+  const exists = cloud.recipes.some((r) => r.id === withId.id);
+  setCloud({
+    recipes: exists ? cloud.recipes.map((r) => (r.id === withId.id ? withId : r)) : [withId, ...cloud.recipes],
+  });
   return withId;
 }
 
-export function deleteRecipe(id: string) {
-  writeRecipes(readRecipes().filter((r) => r.id !== id));
+export async function deleteRecipe(id: string): Promise<void> {
+  if (!isCloudConfigured) {
+    writeLocal(readLocal().filter((r) => r.id !== id));
+    return;
+  }
+  const { error } = await requireClient().from("recipes").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  setCloud({ recipes: cloud.recipes.filter((r) => r.id !== id) });
 }
 
-export function patchRecipe(id: string, patch: Partial<Recipe>) {
-  writeRecipes(readRecipes().map((r) => (r.id === id ? { ...r, ...patch } : r)));
+/** Small edits (favorite, rating): update the screen first, then save; undo on failure. */
+export async function patchRecipe(id: string, patch: Partial<Recipe>): Promise<void> {
+  if (!isCloudConfigured) {
+    writeLocal(readLocal().map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    return;
+  }
+  const before = cloud.recipes;
+  const target = before.find((r) => r.id === id);
+  if (!target) return;
+  const merged = { ...target, ...patch, id };
+  setCloud({ recipes: before.map((r) => (r.id === id ? merged : r)) });
+  const { error } = await requireClient().from("recipes").update(toRow(merged)).eq("id", id);
+  if (error) setCloud({ recipes: before, error: `Could not save that change: ${error.message}` });
 }
 
-/* ---- unit preference (US is the default) ---- */
+/* ------------------- unit preference (US is the default) ------------------- */
 export function setUnitSystem(u: UnitSystem) {
   try {
     window.localStorage.setItem(UNITS_KEY, u);
   } catch {
     /* ignore */
   }
-  listeners.forEach((l) => l());
+  notify();
 }
 
 function readUnits(): UnitSystem {

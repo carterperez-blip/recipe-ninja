@@ -2,11 +2,12 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { RecipeCard } from "@/components/RecipeCard";
-import { useHydrated, useRecipes } from "@/lib/store";
+import { useHydrated, useLoadError, useRecipes } from "@/lib/store";
 
 export default function Home() {
   const hydrated = useHydrated();
   const recipes = useRecipes();
+  const loadError = useLoadError();
   const [query, setQuery] = useState("");
   const [tag, setTag] = useState<string | null>(null);
   const [favOnly, setFavOnly] = useState(false);
@@ -30,6 +31,9 @@ export default function Home() {
 
   return (
     <div className="space-y-5">
+      {loadError && (
+        <p role="alert" className="rounded-xl bg-peach px-3 py-2 text-sm">{loadError}</p>
+      )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <input
           type="search"

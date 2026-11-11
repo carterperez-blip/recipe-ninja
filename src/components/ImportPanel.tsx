@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { RecipeForm } from "@/components/RecipeForm";
+import { authHeaders } from "@/lib/auth";
 import type { ImportResult } from "@/lib/import/types";
 
 type Mode = "url" | "text" | "manual";
@@ -22,7 +23,7 @@ export function ImportPanel() {
     try {
       const res = await fetch(mode === "url" ? "/api/import/url" : "/api/import/text", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", ...authHeaders() },
         body: JSON.stringify(mode === "url" ? { url } : { text }),
       });
       const data = (await res.json()) as ApiOk | ApiErr;
