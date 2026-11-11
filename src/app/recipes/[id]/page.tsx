@@ -45,6 +45,15 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
 
       <div className="overflow-hidden rounded-3xl border border-line bg-surface shadow-sm">
         <RecipeImage url={recipe.imageUrl} title={recipe.title} className="h-56 w-full sm:h-72" />
+        {recipe.imageUrl && recipe.imageCredit && (
+          <p className="px-5 pt-2 text-xs text-muted">
+            Photo by{" "}
+            <a href={recipe.imageCredit.url} target="_blank" rel="noreferrer" className="underline">
+              {recipe.imageCredit.name}
+            </a>{" "}
+            on {recipe.imageCredit.source === "pexels" ? "Pexels" : "Unsplash"}
+          </p>
+        )}
         <div className="space-y-3 p-5">
           <div className="flex items-start justify-between gap-3">
             <h1 className="text-2xl font-bold">{recipe.title}</h1>

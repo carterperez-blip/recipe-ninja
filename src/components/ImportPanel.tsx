@@ -2,9 +2,10 @@
 import { useState } from "react";
 import { RecipeForm } from "@/components/RecipeForm";
 import { authHeaders } from "@/lib/auth";
+import { fileToJpegBase64 } from "@/lib/image/resize";
 import type { ImportResult } from "@/lib/import/types";
 
-type Mode = "url" | "text" | "manual";
+type Mode = "url" | "text" | "photo" | "manual";
 type ApiOk = ImportResult & { budget?: { spentUsd: number; capUsd: number; nearLimit: boolean } };
 type ApiErr = { error: string; code: string };
 
@@ -12,6 +13,7 @@ export function ImportPanel() {
   const [mode, setMode] = useState<Mode>("url");
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiErr | null>(null);
   const [result, setResult] = useState<ApiOk | null>(null);
@@ -21,10 +23,19 @@ export function ImportPanel() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(mode === "url" ? "/api/import/url" : "/api/import/text", {
+      let endpoint = "/api/import/text";
+      let payload: unknown = { text };
+      if (mode === "url") {
+        endpoint = "/api/import/url";
+        payload = { url };
+      } else if (mode === "photo") {
+        endpoint = "/api/import/photo";
+        payload = { images: await Promise.all(files.map((f) => fileToJpegBase64(f))) };
+      }
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json", ...authHeaders() },
-        body: JSON.stringify(mode === "url" ? { url } : { text }),
+        body: JSON.stringify(payload),
       });
       const data = (await res.json()) as ApiOk | ApiErr;
       if (!res.ok) setError(data as ApiErr);
@@ -32,8 +43,14 @@ export function ImportPanel() {
         setResult(data as ApiOk);
         setFormKey((k) => k + 1);
       }
-    } catch {
-      setError({ error: "Could not reach the server. Check your connection.", code: "fetch_failed" });
+    } catch (e) {
+      setError({
+        error:
+          mode === "photo" && e instanceof Error && !/fetch|network/i.test(e.message)
+            ? e.message
+            : "Could not reach the server. Check your connection.",
+        code: "fetch_failed",
+      });
     } finally {
       setBusy(false);
     }
@@ -86,6 +103,7 @@ export function ImportPanel() {
       <div className="flex flex-wrap gap-2" role="group" aria-label="How to add">
         {tab("url", "From a link")}
         {tab("text", "Paste text")}
+        {tab("photo", "From a photo")}
         {tab("manual", "Type it in")}
       </div>
 
@@ -98,6 +116,20 @@ export function ImportPanel() {
               <label htmlFor="import-url" className="block text-sm font-medium">Recipe web address</label>
               <input id="import-url" type="url" inputMode="url" placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
             </>
+          ) : mode === "photo" ? (
+            <>
+              <label htmlFor="import-photo" className="block text-sm font-medium">
+                Photo of a cookbook page, card or handwritten note (up to 3)
+              </label>
+              <input
+                id="import-photo"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setFiles(Array.from(e.target.files ?? []).slice(0, 3))}
+              />
+              {files.length > 0 && <p className="text-sm text-muted">{files.length} photo{files.length > 1 ? "s" : ""} selected</p>}
+            </>
           ) : (
             <>
               <label htmlFor="import-text" className="block text-sm font-medium">Paste the recipe</label>
@@ -107,7 +139,7 @@ export function ImportPanel() {
           <button
             type="button"
             onClick={run}
-            disabled={busy || (mode === "url" ? !url.trim() : !text.trim())}
+            disabled={busy || (mode === "url" ? !url.trim() : mode === "photo" ? files.length === 0 : !text.trim())}
             className="rounded-full bg-lav-strong px-5 py-2 font-semibold text-white disabled:opacity-50"
           >
             {busy ? "Reading the recipe… this can take about 20 seconds" : "Import recipe"}

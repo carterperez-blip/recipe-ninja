@@ -1,4 +1,4 @@
-import type { Ingredient, Recipe } from "./types";
+import type { ImageCredit, Ingredient, Recipe } from "./types";
 
 /** Database row shape of public.recipes (see supabase/schema.sql). */
 export interface RecipeRow {
@@ -6,6 +6,7 @@ export interface RecipeRow {
   title: string;
   source_url: string | null;
   image_url: string | null;
+  image_credit: ImageCredit | null;
   base_servings: number | string;
   prep_minutes: number | null;
   cook_minutes: number | null;
@@ -23,6 +24,7 @@ export function toRow(r: Recipe & { id: string }): RecipeRow {
     title: r.title,
     source_url: r.sourceUrl ?? null,
     image_url: r.imageUrl ?? null,
+    image_credit: r.imageUrl ? (r.imageCredit ?? null) : null,
     base_servings: r.baseServings,
     prep_minutes: r.prepMinutes ?? null,
     cook_minutes: r.cookMinutes ?? null,
@@ -41,6 +43,7 @@ export function fromRow(row: RecipeRow): Recipe {
     title: row.title,
     sourceUrl: row.source_url,
     imageUrl: row.image_url,
+    imageCredit: row.image_credit ?? null,
     baseServings: Number(row.base_servings),
     prepMinutes: row.prep_minutes,
     cookMinutes: row.cook_minutes,

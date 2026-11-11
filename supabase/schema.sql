@@ -8,6 +8,8 @@ create table if not exists public.recipes (
   title         text not null,
   source_url    text,
   image_url     text,
+  -- { name, url, source } when the picture came from Pexels or Unsplash
+  image_credit  jsonb,
   base_servings numeric not null default 2 check (base_servings > 0),
   prep_minutes  integer check (prep_minutes >= 0),
   cook_minutes  integer check (cook_minutes >= 0),
@@ -22,6 +24,9 @@ create table if not exists public.recipes (
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
+
+-- for projects created before picture credits existed
+alter table public.recipes add column if not exists image_credit jsonb;
 
 create index if not exists recipes_user_idx on public.recipes (user_id, created_at desc);
 create index if not exists recipes_tags_idx on public.recipes using gin (tags);

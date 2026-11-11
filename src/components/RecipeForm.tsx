@@ -3,7 +3,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { parseIngredientLine } from "@/lib/recipe/parse";
 import { rawIngredientText } from "@/lib/recipe/scale";
-import { DEFAULT_SERVINGS, type Recipe } from "@/lib/recipe/types";
+import { DEFAULT_SERVINGS, type ImageCredit, type Recipe } from "@/lib/recipe/types";
+import { PicturePicker } from "@/components/PicturePicker";
+import { RecipeImage } from "@/components/RecipeImage";
 import { saveRecipe } from "@/lib/store";
 
 const label = "mb-1 block text-sm font-medium";
@@ -12,6 +14,7 @@ export function RecipeForm({ initial }: { initial?: Recipe }) {
   const router = useRouter();
   const [title, setTitle] = useState(initial?.title ?? "");
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? "");
+  const [imageCredit, setImageCredit] = useState<ImageCredit | null>(initial?.imageCredit ?? null);
   const [sourceUrl, setSourceUrl] = useState(initial?.sourceUrl ?? "");
   const [servings, setServings] = useState(String(initial?.baseServings ?? DEFAULT_SERVINGS));
   const [prep, setPrep] = useState(initial?.prepMinutes?.toString() ?? "");
@@ -41,6 +44,7 @@ export function RecipeForm({ initial }: { initial?: Recipe }) {
       ...initial,
       title: title.trim(),
       imageUrl: imageUrl.trim() || null,
+      imageCredit: imageUrl.trim() ? imageCredit : null,
       sourceUrl: sourceUrl.trim() || null,
       baseServings: base,
       prepMinutes: prep ? Number(prep) : null,
@@ -66,12 +70,36 @@ export function RecipeForm({ initial }: { initial?: Recipe }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={label} htmlFor="img">Picture URL</label>
-          <input id="img" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
+          <input
+            id="img"
+            value={imageUrl}
+            onChange={(e) => {
+              setImageUrl(e.target.value);
+              setImageCredit(null); // a pasted link is not a credited stock photo
+            }}
+            placeholder="https://…"
+          />
         </div>
         <div>
           <label className={label} htmlFor="src">Source URL</label>
           <input id="src" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} placeholder="https://…" />
         </div>
+      </div>
+      <div className="space-y-2">
+        {imageUrl.trim() && (
+          <div className="flex items-center gap-3">
+            <RecipeImage url={imageUrl.trim()} title={title || "Recipe"} className="h-16 w-24 rounded-xl" />
+            {imageCredit && <p className="text-xs text-muted">Photo by {imageCredit.name} on {imageCredit.source === "pexels" ? "Pexels" : "Unsplash"}</p>}
+            <button type="button" className="text-sm underline" onClick={() => { setImageUrl(""); setImageCredit(null); }}>Remove picture</button>
+          </div>
+        )}
+        <PicturePicker
+          defaultQuery={title}
+          onPick={(url, credit) => {
+            setImageUrl(url);
+            setImageCredit(credit);
+          }}
+        />
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <div>

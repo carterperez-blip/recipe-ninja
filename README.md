@@ -2,7 +2,8 @@
 
 A personal recipe library for the browser and iPhone (install it from Safari with Share, then Add to Home Screen).
 
-- Save recipes from a link, pasted text or a photo, or type them in
+- Save recipes from a link, pasted text or a photo (up to 3 photos of a page or card), or type them in
+- Find a picture from Pexels or Unsplash, with the photographer credited
 - Ingredients and step-by-step instructions with a picture on every recipe
 - Serving scaler: every recipe opens at 2 people
 - US units by default with a metric toggle
@@ -32,3 +33,4 @@ Without Supabase settings the app runs in local mode: no sign-in, recipes stored
    - Sign in once with your own Google account, then turn off "Allow new users to sign up" (Authentication > Sign In / Providers) so nobody else can create an account.
 3. **Netlify:** add a site from this GitHub repo and set the variables listed in `.env.example`.
 4. **Anthropic:** create an API key and set `ANTHROPIC_API_KEY`.
+5. **Pictures:** create a free Pexels API key (or an Unsplash developer app) and set `PEXELS_API_KEY` or `UNSPLASH_ACCESS_KEY`.

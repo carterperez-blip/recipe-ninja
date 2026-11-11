@@ -17,11 +17,19 @@ export interface Step {
   text: string;
 }
 
+export interface ImageCredit {
+  name: string;
+  url: string;
+  source: "pexels" | "unsplash";
+}
+
 export interface Recipe {
   id?: string;
   title: string;
   sourceUrl?: string | null;
   imageUrl?: string | null;
+  /** Photographer credit when the picture came from a photo site. */
+  imageCredit?: ImageCredit | null;
   /** Number of servings the ingredient list was written for. */
   baseServings: number;
   prepMinutes?: number | null;

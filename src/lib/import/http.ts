@@ -12,6 +12,9 @@ const STATUS: Record<ImportError["code"], number> = {
   ai_failed: 502,
   too_long: 413,
   unauthorized: 401,
+  bad_image: 400,
+  images_unavailable: 503,
+  search_failed: 502,
 };
 
 export function errorResponse(e: unknown): Response {

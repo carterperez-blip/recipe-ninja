@@ -25,7 +25,10 @@ export class ImportError extends Error {
       | "ai_declined"
       | "ai_failed"
       | "too_long"
-      | "unauthorized",
+      | "unauthorized"
+      | "bad_image"
+      | "images_unavailable"
+      | "search_failed",
   ) {
     super(message);
   }
