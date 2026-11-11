@@ -116,3 +116,22 @@ describe("timed", () => {
     await expect(timed(new Promise(() => {}), "Saving", 20)).rejects.toThrow(/Saving is taking too long/);
   });
 });
+
+import { ingredientsForStep, parsePeople } from "./cook";
+describe("cook mode helpers", () => {
+  const ings = ["1 1/2 lb chicken breast", "3 cloves garlic, minced", "2 tbsp olive oil", "1 lemon, juiced", "1 tsp dried oregano", "salt, to taste", "1/2 cup chicken broth"].map(parseIngredientLine);
+  const names = (step: string) => ingredientsForStep(step, ings).map((i) => ings[i].name);
+  it("finds the ingredients a step uses", () => {
+    expect(names("Season the chicken with salt and oregano.")).toEqual(["chicken breast", "dried oregano", "salt"].map((n) => n)); // chicken -> first match
+    expect(names("Sear in olive oil over medium-high heat for 5 minutes per side.")).toEqual(["olive oil"]);
+    expect(names("Add garlic, lemon juice and broth. Simmer for 10 minutes.")).toEqual(["garlic", "lemon", "chicken broth"]);
+    expect(names("Rest for 3 minutes, then serve with the pan sauce.")).toEqual([]);
+  });
+  it("matches plurals", () => {
+    expect(names("Mince the cloves of garlic")).toContain("garlic");
+  });
+  it("reads people from a URL safely", () => {
+    expect(parsePeople("4", 2)).toBe(4);
+    for (const bad of [null, "", "0", "-1", "abc", "2.5", "51"]) expect(parsePeople(bad, 2)).toBe(2);
+  });
+});

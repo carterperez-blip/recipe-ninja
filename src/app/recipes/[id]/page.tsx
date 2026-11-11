@@ -94,6 +94,15 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
         </div>
       </div>
 
+      {recipe.steps.length > 0 && (
+        <Link
+          href={`/recipes/${recipe.id}/cook?people=${people}`}
+          className="block rounded-2xl bg-accent py-4 text-center text-lg font-semibold text-white shadow-sm hover:opacity-90"
+        >
+          Start cooking · {people} {people === 1 ? "person" : "people"}
+        </Link>
+      )}
+
       <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <section className="space-y-4 rounded-3xl bg-navy-soft p-5">
           <h2 className="text-lg font-semibold">Ingredients</h2>
