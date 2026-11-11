@@ -143,6 +143,9 @@ async function addDrafts(drafts: GroceryDraft[]): Promise<number> {
   return changed.length;
 }
 
+/** Add already-built drafts (for example a whole week of planned meals) and merge them into the list. */
+export const addDraftsToGrocery = addDrafts;
+
 /** Add a recipe's ingredients, scaled by `factor`, merging with what is already on the list. */
 export function addRecipeToGrocery(ingredients: Ingredient[], factor: number, recipeTitle: string) {
   return addDrafts(draftsFromIngredients(ingredients, factor, recipeTitle));

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useLayoutEffect, useState } from "react";
+import { PlanMenu } from "@/components/PlanMenu";
 import { RecipeImage } from "@/components/RecipeImage";
 import { displayIngredient, scaleFactor } from "@/lib/recipe/scale";
 import { convertTemperatures } from "@/lib/recipe/units";
@@ -177,6 +178,8 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
               </p>
             )}
           </div>
+
+          <PlanMenu recipe={recipe} people={people} />
 
           <ul className="space-y-2">
             {recipe.ingredients.map((ing, i) => {

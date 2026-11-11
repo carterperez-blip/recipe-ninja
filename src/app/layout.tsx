@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
+import { Suspense } from "react";
 import "./globals.css";
 import { AccountFooter, AccountMenu } from "@/components/AccountMenu";
 import { AuthGate } from "@/components/AuthGate";
 import { Logo } from "@/components/Logo";
+import { NavTabs } from "@/components/NavTabs";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -30,6 +32,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </Link>
             <AccountMenu />
           </div>
+          <Suspense fallback={null}>
+            <NavTabs />
+          </Suspense>
         </header>
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6"><AuthGate>{children}</AuthGate></main>
         <AccountFooter />
