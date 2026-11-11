@@ -56,9 +56,17 @@ describe("scaler (acceptance from the PRD)", () => {
   it("does not scale to-taste items", () => {
     expect(text("salt, to taste", 8, 2)).toBe("salt, to taste");
   });
+  it("keeps counted nouns agreeing with the amount", () => {
+    expect(text("2 eggs", 1, 2)).toBe("1 egg");
+    expect(text("1 onion, diced", 4, 2)).toBe("2 onions, diced");
+    expect(text("2 tomatoes", 1, 2)).toBe("1 tomato");
+    expect(text("1 potato", 4, 2)).toBe("2 potatoes");
+    expect(text("2 cups flour", 1, 2)).toBe("1 cup flour");
+    expect(text("2 eggs", 2, 2)).toBe("2 eggs"); // unscaled text is left as written
+  });
   it("flags counted items that scale to a fraction", () => {
     const d = displayIngredient(parseIngredientLine("1 egg"), 1.5, "us");
-    expect(d.text).toBe("1½ egg");
+    expect(d.text).toBe("1½ eggs");
     expect(d.roundHint).toBe(true);
   });
 });

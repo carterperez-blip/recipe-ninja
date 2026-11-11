@@ -1,5 +1,6 @@
 import type { Ingredient, UnitSystem } from "./types";
 import { formatRange, formatQuantity } from "./quantity";
+import { agreeWithAmount } from "./inflect";
 import { smoothUS, toMetric, toUS, unitLabel, type Amount } from "./units";
 
 export function scaleFactor(peopleWanted: number, baseServings: number): number {
@@ -37,7 +38,9 @@ export function displayIngredient(
   const amount = `${formatRange(a.quantity, a.quantityMax)}${label}`;
   const roundHint =
     !a.unit && ing.scalable && f !== 1 && formatQuantity(a.quantity) !== String(Math.round(a.quantity));
-  return { amount, name: ing.name, note: ing.note, roundHint, text: join(amount, ing) };
+  // counted items scaled to a new amount: "2 eggs" at half -> "1 egg"
+  const name = !a.unit && ing.scalable && f !== 1 ? agreeWithAmount(ing.name, a.quantityMax ?? a.quantity) : ing.name;
+  return { amount, name, note: ing.note, roundHint, text: join(amount, { ...ing, name }) };
 }
 
 function join(amount: string, ing: Ingredient): string {
