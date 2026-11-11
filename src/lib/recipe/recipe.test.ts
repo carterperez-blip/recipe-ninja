@@ -106,3 +106,13 @@ describe("database row mapping", () => {
     expect(r.notes).toBe("");
   });
 });
+
+import { timed } from "@/lib/store";
+describe("timed", () => {
+  it("passes through a result that arrives in time", async () => {
+    await expect(timed(Promise.resolve(5), "Saving", 50)).resolves.toBe(5);
+  });
+  it("rejects with a clear message when the call never answers", async () => {
+    await expect(timed(new Promise(() => {}), "Saving", 20)).rejects.toThrow(/Saving is taking too long/);
+  });
+});

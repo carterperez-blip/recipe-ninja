@@ -141,10 +141,10 @@ async function loadCloud() {
   const auth = getAuthState();
   if (!supabase || auth.status !== "signedIn") return;
   loadingFor = auth.session.user.id;
-  const { data, error } = await supabase
-    .from("recipes")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const { data, error } = await timed(
+    supabase.from("recipes").select("*").order("created_at", { ascending: false }),
+    "Loading your recipes",
+  ).catch((e: Error) => ({ data: null, error: { message: e.message } }));
   if (getAuthState().status !== "signedIn") return; // signed out while loading
   if (error) setCloud({ loaded: true, error: `Could not load your recipes: ${error.message}` });
   else setCloud({ recipes: (data as RecipeRow[]).map(fromRow), loaded: true, error: null });
@@ -198,6 +198,20 @@ export function useLoadError(): string | null {
 
 /* -------------------------------- mutations -------------------------------- */
 
+const WRITE_TIMEOUT_MS = 20_000;
+
+/** Give up on a database call that never answers, so the screen cannot freeze on "Saving…". */
+export function timed<T>(work: PromiseLike<T>, what: string, ms = WRITE_TIMEOUT_MS): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`${what} is taking too long, so it may not have saved. Check your connection and try again.`)),
+      ms,
+    );
+  });
+  return Promise.race([Promise.resolve(work), timeout]).finally(() => clearTimeout(timer));
+}
+
 function requireClient() {
   const supabase = getSupabase();
   if (!supabase || getAuthState().status !== "signedIn") throw new Error("Please sign in first.");
@@ -212,8 +226,11 @@ export async function saveRecipe(recipe: Recipe): Promise<Recipe> {
     writeLocal(exists ? all.map((r) => (r.id === withId.id ? withId : r)) : [withId, ...all]);
     return withId;
   }
-  const { error } = await requireClient().from("recipes").upsert(toRow(withId));
-  if (error) throw new Error(error.message);
+  const { error } = await timed(requireClient().from("recipes").upsert(toRow(withId)), "Saving");
+  if (error) {
+    console.error("save failed", error);
+    throw new Error(error.message);
+  }
   const exists = cloud.recipes.some((r) => r.id === withId.id);
   setCloud({
     recipes: exists ? cloud.recipes.map((r) => (r.id === withId.id ? withId : r)) : [withId, ...cloud.recipes],
@@ -226,7 +243,7 @@ export async function deleteRecipe(id: string): Promise<void> {
     writeLocal(readLocal().filter((r) => r.id !== id));
     return;
   }
-  const { error } = await requireClient().from("recipes").delete().eq("id", id);
+  const { error } = await timed(requireClient().from("recipes").delete().eq("id", id), "Deleting");
   if (error) throw new Error(error.message);
   setCloud({ recipes: cloud.recipes.filter((r) => r.id !== id) });
 }
@@ -242,8 +259,12 @@ export async function patchRecipe(id: string, patch: Partial<Recipe>): Promise<v
   if (!target) return;
   const merged = { ...target, ...patch, id };
   setCloud({ recipes: before.map((r) => (r.id === id ? merged : r)) });
-  const { error } = await requireClient().from("recipes").update(toRow(merged)).eq("id", id);
-  if (error) setCloud({ recipes: before, error: `Could not save that change: ${error.message}` });
+  try {
+    const { error } = await timed(requireClient().from("recipes").update(toRow(merged)).eq("id", id), "Saving");
+    if (error) throw new Error(error.message);
+  } catch (e) {
+    setCloud({ recipes: before, error: `Could not save that change: ${e instanceof Error ? e.message : "unknown error"}` });
+  }
 }
 
 /* ------------------- unit preference (US is the default) ------------------- */
