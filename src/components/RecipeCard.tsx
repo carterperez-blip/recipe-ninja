@@ -20,7 +20,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         </p>
         <div className="flex flex-wrap gap-1.5">
           {recipe.tags.slice(0, 3).map((t) => (
-            <span key={t} className="rounded-full bg-mint px-2.5 py-0.5 text-xs">
+            <span key={t} className="rounded-full bg-navy-soft px-2.5 py-0.5 text-xs">
               {t}
             </span>
           ))}

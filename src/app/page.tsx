@@ -32,7 +32,7 @@ export default function Home() {
   return (
     <div className="space-y-5">
       {loadError && (
-        <p role="alert" className="rounded-xl bg-peach px-3 py-2 text-sm">{loadError}</p>
+        <p role="alert" className="rounded-xl bg-accent-soft px-3 py-2 text-sm">{loadError}</p>
       )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <input
@@ -45,7 +45,7 @@ export default function Home() {
         />
         <button
           onClick={() => setFavOnly((v) => !v)}
-          className={`rounded-full border px-4 py-2 text-sm ${favOnly ? "border-butter-strong bg-butter" : "border-line bg-surface"}`}
+          className={`rounded-full border px-4 py-2 text-sm ${favOnly ? "border-accent bg-sand" : "border-line bg-surface"}`}
           aria-pressed={favOnly}
         >
           ⭐ Favorites
@@ -59,7 +59,7 @@ export default function Home() {
               key={t}
               onClick={() => setTag(tag === t ? null : t)}
               aria-pressed={tag === t}
-              className={`rounded-full px-3 py-1 text-sm ${tag === t ? "bg-lav-strong text-white" : "bg-lav"}`}
+              className={`rounded-full px-3 py-1 text-sm ${tag === t ? "bg-accent text-white" : "bg-navy-soft"}`}
             >
               {t}
             </button>
@@ -72,7 +72,7 @@ export default function Home() {
           <p className="mb-3 text-muted">
             {recipes.length === 0 ? "No recipes yet." : "No recipes match your search."}
           </p>
-          <Link href="/recipes/new" className="rounded-full bg-mint-strong px-4 py-2 text-sm font-semibold">
+          <Link href="/recipes/new" className="rounded-full bg-navy px-4 py-2 text-sm font-semibold">
             Add your first recipe
           </Link>
         </div>

@@ -14,7 +14,7 @@ export function AccountMenu() {
       )}
       <Link
         href="/recipes/new"
-        className="rounded-full bg-lav-strong px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
+        className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90"
       >
         + Add recipe
       </Link>

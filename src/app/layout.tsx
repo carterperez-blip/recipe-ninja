@@ -22,9 +22,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <header className="sticky top-0 z-10 border-b border-line bg-bg/90 backdrop-blur">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-            <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
-              <Logo className="h-9 w-9" />
-              Recipe Ninja
+            <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-navy">
+              <Logo className="h-10 w-auto" />
+              <span>
+                recipe <span className="font-extrabold italic text-accent">ninja</span>
+              </span>
             </Link>
             <AccountMenu />
           </div>

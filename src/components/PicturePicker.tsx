@@ -55,7 +55,7 @@ export function PicturePicker({
 
   if (!open) {
     return (
-      <button type="button" onClick={openPanel} className="rounded-full bg-mint px-4 py-1.5 text-sm font-medium">
+      <button type="button" onClick={openPanel} className="rounded-full bg-navy-soft px-4 py-1.5 text-sm font-medium">
         Find a picture
       </button>
     );
@@ -76,12 +76,12 @@ export function PicturePicker({
           }}
           placeholder="e.g. lemon chicken"
         />
-        <button type="button" onClick={() => void search(query)} disabled={busy || !query.trim()} className="rounded-full bg-lav-strong px-4 text-sm font-semibold text-white disabled:opacity-50">
+        <button type="button" onClick={() => void search(query)} disabled={busy || !query.trim()} className="rounded-full bg-accent px-4 text-sm font-semibold text-white disabled:opacity-50">
           {busy ? "…" : "Search"}
         </button>
         <button type="button" onClick={() => setOpen(false)} className="text-sm underline">Close</button>
       </div>
-      {error && <p role="alert" className="rounded-lg bg-peach px-3 py-1.5 text-sm">{error}</p>}
+      {error && <p role="alert" className="rounded-lg bg-accent-soft px-3 py-1.5 text-sm">{error}</p>}
       {photos && photos.length > 0 && (
         <>
           <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">

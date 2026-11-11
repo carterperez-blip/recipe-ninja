@@ -1,4 +1,4 @@
-const TINTS = ["bg-mint", "bg-peach", "bg-lav", "bg-butter"];
+const TINTS = ["bg-navy-soft", "bg-accent-soft", "bg-sand"];
 
 /** Recipe photo, or a pastel placeholder when there is none yet. */
 export function RecipeImage({ url, title, className = "" }: { url?: string | null; title: string; className?: string }) {

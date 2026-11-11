@@ -64,7 +64,7 @@ export function ImportPanel() {
         setError(null);
       }}
       aria-pressed={mode === m}
-      className={`rounded-full px-4 py-2 text-sm ${mode === m ? "bg-lav-strong font-semibold text-white" : "bg-lav"}`}
+      className={`rounded-full px-4 py-2 text-sm ${mode === m ? "bg-accent font-semibold text-white" : "bg-navy-soft"}`}
     >
       {label}
     </button>
@@ -74,7 +74,7 @@ export function ImportPanel() {
   if (result) {
     return (
       <div className="space-y-4">
-        <div className="space-y-2 rounded-2xl bg-mint p-4 text-sm">
+        <div className="space-y-2 rounded-2xl bg-navy-soft p-4 text-sm">
           <p className="font-semibold">
             Review before saving{" "}
             <span className="font-normal text-muted">
@@ -82,10 +82,10 @@ export function ImportPanel() {
             </span>
           </p>
           {result.warnings.map((w) => (
-            <p key={w} className="rounded-lg bg-butter px-3 py-1.5">{w}</p>
+            <p key={w} className="rounded-lg bg-sand px-3 py-1.5">{w}</p>
           ))}
           {result.budget?.nearLimit && (
-            <p className="rounded-lg bg-peach px-3 py-1.5">
+            <p className="rounded-lg bg-accent-soft px-3 py-1.5">
               AI use this month: ${result.budget.spentUsd.toFixed(2)} of ${result.budget.capUsd}.
             </p>
           )}
@@ -140,13 +140,13 @@ export function ImportPanel() {
             type="button"
             onClick={run}
             disabled={busy || (mode === "url" ? !url.trim() : mode === "photo" ? files.length === 0 : !text.trim())}
-            className="rounded-full bg-lav-strong px-5 py-2 font-semibold text-white disabled:opacity-50"
+            className="rounded-full bg-accent px-5 py-2 font-semibold text-white disabled:opacity-50"
           >
             {busy ? "Reading the recipe… this can take about 20 seconds" : "Import recipe"}
           </button>
 
           {error && (
-            <div role="alert" className="space-y-2 rounded-xl bg-peach px-3 py-2 text-sm">
+            <div role="alert" className="space-y-2 rounded-xl bg-accent-soft px-3 py-2 text-sm">
               <p>{error.error}</p>
               {mode === "url" && ["blocked", "fetch_failed", "no_recipe", "not_html", "too_long"].includes(error.code) && (
                 <button type="button" className="underline" onClick={() => { setMode("text"); setError(null); }}>

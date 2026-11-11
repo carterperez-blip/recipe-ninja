@@ -127,7 +127,7 @@ export function RecipeForm({ initial }: { initial?: Recipe }) {
         {parsed.length > 0 && (
           <ul className="mt-2 flex flex-wrap gap-1.5 text-xs">
             {parsed.map((p, i) => (
-              <li key={i} className={`rounded-full px-2.5 py-1 ${p.scalable ? "bg-mint" : "bg-butter"}`}>
+              <li key={i} className={`rounded-full px-2.5 py-1 ${p.scalable ? "bg-navy-soft" : "bg-sand"}`}>
                 {p.scalable ? "scales" : "fixed"}: {p.name || "(no name)"}
               </li>
             ))}
@@ -148,10 +148,10 @@ export function RecipeForm({ initial }: { initial?: Recipe }) {
           <input id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
       </div>
-      {error && <p role="alert" className="rounded-xl bg-peach px-3 py-2 text-sm">{error}</p>}
+      {error && <p role="alert" className="rounded-xl bg-accent-soft px-3 py-2 text-sm">{error}</p>}
       <div className="flex gap-3">
         <button
-          className="rounded-full bg-lav-strong px-5 py-2 font-semibold text-white disabled:opacity-50"
+          className="rounded-full bg-accent px-5 py-2 font-semibold text-white disabled:opacity-50"
           type="submit"
           disabled={saving}
         >

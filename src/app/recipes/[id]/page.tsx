@@ -78,7 +78,7 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
                 key={n}
                 onClick={() => patchRecipe(recipe.id!, { rating: recipe.rating === n ? null : n })}
                 aria-label={`${n} star${n > 1 ? "s" : ""}`}
-                className={(recipe.rating ?? 0) >= n ? "text-butter-strong" : "text-line"}
+                className={(recipe.rating ?? 0) >= n ? "text-accent" : "text-line"}
               >
                 ★
               </button>
@@ -86,21 +86,21 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
           </div>
           <div className="flex flex-wrap gap-1.5">
             {recipe.tags.map((t) => (
-              <span key={t} className="rounded-full bg-lav px-2.5 py-0.5 text-xs">{t}</span>
+              <span key={t} className="rounded-full bg-navy-soft px-2.5 py-0.5 text-xs">{t}</span>
             ))}
           </div>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <section className="space-y-4 rounded-3xl bg-mint p-5">
+        <section className="space-y-4 rounded-3xl bg-navy-soft p-5">
           <h2 className="text-lg font-semibold">Ingredients</h2>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 rounded-full bg-surface px-2 py-1" role="group" aria-label="Number of people">
               <button
                 onClick={() => setPeople((p) => Math.max(1, p - 1))}
-                className="h-8 w-8 rounded-full bg-peach text-lg font-bold"
+                className="h-8 w-8 rounded-full bg-accent-soft text-lg font-bold"
                 aria-label="Fewer people"
               >
                 −
@@ -110,7 +110,7 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
               </span>
               <button
                 onClick={() => setPeople((p) => Math.min(50, p + 1))}
-                className="h-8 w-8 rounded-full bg-peach text-lg font-bold"
+                className="h-8 w-8 rounded-full bg-accent-soft text-lg font-bold"
                 aria-label="More people"
               >
                 +
@@ -127,7 +127,7 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
                   key={u}
                   onClick={() => setUnitSystem(u)}
                   aria-pressed={system === u}
-                  className={`rounded-full px-3 py-1 ${system === u ? "bg-lav-strong font-semibold text-white" : ""}`}
+                  className={`rounded-full px-3 py-1 ${system === u ? "bg-accent font-semibold text-white" : ""}`}
                 >
                   {u === "us" ? "US" : "Metric"}
                 </button>
@@ -152,7 +152,7 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
           </ul>
         </section>
 
-        <section className="space-y-3 rounded-3xl bg-peach p-5">
+        <section className="space-y-3 rounded-3xl bg-accent-soft p-5">
           <h2 className="text-lg font-semibold">Instructions</h2>
           <ol className="space-y-3">
             {recipe.steps.map((s, i) => (
@@ -168,11 +168,11 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
       </div>
 
       {recipe.notes ? (
-        <p className="rounded-2xl bg-butter px-4 py-3 text-sm"><strong>Notes:</strong> {recipe.notes}</p>
+        <p className="rounded-2xl bg-sand px-4 py-3 text-sm"><strong>Notes:</strong> {recipe.notes}</p>
       ) : null}
 
       <div className="flex flex-wrap items-center gap-3 text-sm">
-        <Link href={`/recipes/${recipe.id}/edit`} className="rounded-full bg-lav-strong px-4 py-2 font-semibold text-white">
+        <Link href={`/recipes/${recipe.id}/edit`} className="rounded-full bg-accent px-4 py-2 font-semibold text-white">
           Edit
         </Link>
         <button

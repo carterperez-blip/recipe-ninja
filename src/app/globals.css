@@ -1,20 +1,19 @@
 @import "tailwindcss";
 
-/* Pastel palette: soft mint, peach, lavender and butter yellow on warm off-white. */
+/* Recipe Ninja brand colours, taken from the logo: navy and red-orange, with soft tints. */
 :root {
-  --bg: #fdf8f3;
+  --bg: #fbfaf8;
   --surface: #ffffff;
-  --ink: #3b3550;
-  --muted: #7a7390;
-  --line: #eadfd6;
-  --mint: #d6f1e5;
-  --mint-strong: #8fd3b4;
-  --peach: #ffe1d3;
-  --peach-strong: #f6aa8b;
-  --lav: #e8dffa;
-  --lav-strong: #b19ce8;
-  --butter: #fff2c2;
-  --butter-strong: #f0d062;
+  --ink: #1d2e48; /* logo navy */
+  --muted: #5f6b80;
+  --line: #e4e1da;
+  --accent: #d7381a; /* logo red-orange (the wok) */
+  --accent-soft: #fde8e1;
+  --accent-mid: #f5b4a1;
+  --navy: #1d2e48;
+  --navy-soft: #e5eaf3;
+  --navy-mid: #b8c3d9;
+  --sand: #f7f1e3;
   color-scheme: light;
 }
 
@@ -24,14 +23,13 @@
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-line: var(--line);
-  --color-mint: var(--mint);
-  --color-mint-strong: var(--mint-strong);
-  --color-peach: var(--peach);
-  --color-peach-strong: var(--peach-strong);
-  --color-lav: var(--lav);
-  --color-lav-strong: var(--lav-strong);
-  --color-butter: var(--butter);
-  --color-butter-strong: var(--butter-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-mid: var(--accent-mid);
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
+  --color-navy-mid: var(--navy-mid);
+  --color-sand: var(--sand);
   --font-sans: var(--font-geist-sans);
 }
 
@@ -54,6 +52,6 @@ select {
 input:focus,
 textarea:focus,
 select:focus {
-  outline: 2px solid var(--lav-strong);
+  outline: 2px solid var(--navy);
   outline-offset: 1px;
 }
