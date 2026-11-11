@@ -58,7 +58,7 @@ export function formatQuantity(n: number): string {
     const r = Math.round(n * 10) / 10;
     return Number.isInteger(r) ? String(r) : String(r);
   }
-  let whole = Math.floor(n);
+  const whole = Math.floor(n);
   const frac = n - whole;
   if (frac < 0.04) return String(whole || 0);
   if (frac > 0.96) return String(whole + 1);

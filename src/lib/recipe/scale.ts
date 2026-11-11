@@ -44,3 +44,14 @@ function join(amount: string, ing: Ingredient): string {
   const base = [amount, ing.name].filter(Boolean).join(" ");
   return ing.note ? `${base}, ${ing.note}` : base;
 }
+
+/** Ingredient as it should appear in an editable text box (no unit conversion). */
+export function rawIngredientText(ing: Ingredient): string {
+  const amount =
+    ing.quantity === null
+      ? ""
+      : `${formatRange(ing.quantity, ing.quantityMax)}${
+          ing.unit ? ` ${unitLabel(ing.unit, ing.quantityMax ?? ing.quantity)}` : ""
+        }`;
+  return join(amount, ing);
+}
