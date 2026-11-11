@@ -89,6 +89,23 @@ create policy "meal_plan: owner full access" on public.meal_plan
   for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 
+-- Times a recipe was cooked ("Mark as cooked"). One row per recipe per day.
+create table if not exists public.cooked_log (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  recipe_id  uuid not null references public.recipes (id) on delete cascade,
+  cooked_on  date not null,
+  servings   numeric check (servings > 0),
+  created_at timestamptz not null default now(),
+  unique (recipe_id, cooked_on)
+);
+create index if not exists cooked_log_user_idx on public.cooked_log (user_id, recipe_id);
+alter table public.cooked_log enable row level security;
+drop policy if exists "cooked_log: owner full access" on public.cooked_log;
+create policy "cooked_log: owner full access" on public.cooked_log
+  for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
 -- Monthly AI spend, for the $10 cap. Written only by the server (service role);
 -- the owner may read it to show usage in the app.
 create table if not exists public.ai_usage (

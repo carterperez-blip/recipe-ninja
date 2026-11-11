@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { RecipeCard } from "@/components/RecipeCard";
+import { SORT_LABELS, sortRecipes, statsByRecipe, type SortMode } from "@/lib/cooked";
+import { useCooked } from "@/lib/cookedStore";
 import { useHydrated, useLoadError, useRecipes } from "@/lib/store";
 
 export default function Home() {
@@ -11,11 +13,14 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [tag, setTag] = useState<string | null>(null);
   const [favOnly, setFavOnly] = useState(false);
+  const [sort, setSort] = useState<SortMode>("newest");
+  const cooked = useCooked();
+  const stats = useMemo(() => statsByRecipe(cooked, recipes), [cooked, recipes]);
 
   const tags = useMemo(() => [...new Set(recipes.flatMap((r) => r.tags))].sort(), [recipes]);
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return recipes.filter((r) => {
+    const filtered = recipes.filter((r) => {
       if (favOnly && !r.favorite) return false;
       if (tag && !r.tags.includes(tag)) return false;
       if (!q) return true;
@@ -25,7 +30,8 @@ export default function Home() {
         r.ingredients.some((i) => i.name.toLowerCase().includes(q))
       );
     });
-  }, [recipes, query, tag, favOnly]);
+    return sortRecipes(filtered, sort, stats);
+  }, [recipes, query, tag, favOnly, sort, stats]);
 
   if (!hydrated) return <p className="text-muted">Loading your recipes…</p>;
 
@@ -43,6 +49,13 @@ export default function Home() {
           aria-label="Search recipes"
           className="sm:max-w-sm"
         />
+        <select aria-label="Sort recipes" value={sort} onChange={(e) => setSort(e.target.value as SortMode)} className="sm:max-w-[12rem]">
+          {(Object.keys(SORT_LABELS) as SortMode[]).map((m) => (
+            <option key={m} value={m}>
+              {SORT_LABELS[m]}
+            </option>
+          ))}
+        </select>
         <button
           onClick={() => setFavOnly((v) => !v)}
           className={`rounded-full border px-4 py-2 text-sm ${favOnly ? "border-accent bg-sand" : "border-line bg-surface"}`}
@@ -79,7 +92,7 @@ export default function Home() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((r) => (
-            <RecipeCard key={r.id} recipe={r} />
+            <RecipeCard key={r.id} recipe={r} cooked={stats.get(r.id!)} />
           ))}
         </div>
       )}

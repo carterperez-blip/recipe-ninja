@@ -6,6 +6,8 @@ import { ingredientsForStep, parsePeople } from "@/lib/recipe/cook";
 import { displayIngredient, scaleFactor } from "@/lib/recipe/scale";
 import { DEFAULT_SERVINGS, type Recipe } from "@/lib/recipe/types";
 import { convertTemperatures } from "@/lib/recipe/units";
+import { markCooked } from "@/lib/cookedStore";
+import { todayISO } from "@/lib/plan";
 import { setUnitSystem, useHydrated, useRecipes, useUnitSystem } from "@/lib/store";
 
 export default function CookPage() {
@@ -77,6 +79,15 @@ function CookView({ recipe, people }: { recipe: Recipe; people: number }) {
   const last = step >= total - 1;
   const go = (d: number) => setStep((s) => Math.min(Math.max(s + d, 0), Math.max(total - 1, 0)));
   const finish = () => router.push(`/recipes/${recipe.id}`);
+  /** Last step: record that it was cooked today, then go back to the recipe. */
+  async function finishCooked() {
+    try {
+      await markCooked({ recipeId: recipe.id!, day: todayISO(), servings: people });
+      finish();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Could not mark it as cooked.");
+    }
+  }
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -197,11 +208,11 @@ function CookView({ recipe, people }: { recipe: Recipe; people: number }) {
           ← Back
         </button>
         <button
-          onClick={() => (last ? finish() : go(1))}
+          onClick={() => (last ? void finishCooked() : go(1))}
           disabled={total === 0}
           className="flex-[2] rounded-2xl bg-accent py-4 text-xl font-semibold text-white disabled:opacity-40"
         >
-          {last ? "Finish" : "Next →"}
+          {last ? "Done · mark as cooked" : "Next →"}
         </button>
       </footer>
     </div>

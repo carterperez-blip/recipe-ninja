@@ -1,8 +1,9 @@
 import Link from "next/link";
+import type { CookedStats } from "@/lib/cooked";
 import type { Recipe } from "@/lib/recipe/types";
 import { RecipeImage } from "./RecipeImage";
 
-export function RecipeCard({ recipe }: { recipe: Recipe }) {
+export function RecipeCard({ recipe, cooked }: { recipe: Recipe; cooked?: CookedStats }) {
   const mins = (recipe.prepMinutes ?? 0) + (recipe.cookMinutes ?? 0);
   return (
     <Link
@@ -17,6 +18,7 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         </div>
         <p className="text-sm text-muted">
           {recipe.ingredients.length} ingredients{mins ? ` · ${mins} min` : ""}
+          {cooked ? ` · cooked ${cooked.count}×` : ""}
         </p>
         <div className="flex flex-wrap gap-1.5">
           {recipe.tags.slice(0, 3).map((t) => (

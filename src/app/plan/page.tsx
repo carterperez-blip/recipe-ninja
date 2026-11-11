@@ -13,6 +13,8 @@ import {
   weekDays,
   weekLabel,
 } from "@/lib/plan";
+import { findCooked } from "@/lib/cooked";
+import { markCooked, unmarkCooked, useCooked } from "@/lib/cookedStore";
 import { addDraftsToGrocery } from "@/lib/groceryStore";
 import { addPlanEntry, removePlanEntry, setPlanServings, usePlan, usePlanError, usePlanReady } from "@/lib/planStore";
 import { useHydrated, useRecipes } from "@/lib/store";
@@ -23,6 +25,7 @@ export default function PlanPage() {
   const entries = usePlan();
   const recipes = useRecipes();
   const loadError = usePlanError();
+  const cooked = useCooked();
   // null = the current week; the date is only read in the browser (never while the page is pre-built)
   const [weekStart, setWeekStart] = useState<string | null>(null);
   const [pickDay, setPickDay] = useState<string | null>(null);
@@ -169,6 +172,25 @@ export default function PlanPage() {
                           Cook
                         </Link>
                       </div>
+                      {(() => {
+                        const done = findCooked(cooked, r.id!, e.day);
+                        return (
+                          <button
+                            onClick={() => {
+                              const act = done
+                                ? unmarkCooked(done.id)
+                                : markCooked({ recipeId: r.id!, day: e.day, servings: e.servings }).then(() => undefined);
+                              act.catch((err: unknown) => setError(err instanceof Error ? err.message : "Could not save that."));
+                            }}
+                            disabled={!done && e.day > today}
+                            aria-pressed={!!done}
+                            className={`rounded-full border px-3 py-1 text-sm ${done ? "border-navy bg-navy text-white" : "border-navy-mid bg-surface"} disabled:opacity-50`}
+                            title={!done && e.day > today ? "You can mark it as cooked on the day" : undefined}
+                          >
+                            {done ? "✓ Cooked" : "Mark as cooked"}
+                          </button>
+                        );
+                      })()}
                     </li>
                   );
                 })}

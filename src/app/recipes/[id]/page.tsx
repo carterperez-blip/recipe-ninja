@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useLayoutEffect, useState } from "react";
+import { CookedPanel } from "@/components/CookedPanel";
 import { PlanMenu } from "@/components/PlanMenu";
 import { RecipeImage } from "@/components/RecipeImage";
 import { displayIngredient, scaleFactor } from "@/lib/recipe/scale";
@@ -102,6 +103,8 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
           </div>
         </div>
       </div>
+
+      <CookedPanel recipe={recipe} people={people} />
 
       {recipe.steps.length > 0 && (
         <Link
