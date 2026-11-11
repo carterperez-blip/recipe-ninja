@@ -25,7 +25,17 @@ export async function requireUser(req: Request): Promise<AppUser> {
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) throw new ImportError("Please sign in again.", "unauthorized");
   const allowed = process.env.ALLOWED_EMAIL?.trim().toLowerCase();
-  if (!allowed || data.user.email?.toLowerCase() !== allowed)
-    throw new ImportError("This account is not allowed.", "unauthorized");
+  const email = data.user.email ?? "(no email)";
+  // Say what the server saw about the caller's own account, but never reveal the allowed address.
+  if (!allowed)
+    throw new ImportError(
+      `You are signed in as ${email}, but the server has no ALLOWED_EMAIL setting. Add it in Netlify and redeploy.`,
+      "unauthorized",
+    );
+  if (data.user.email?.toLowerCase() !== allowed)
+    throw new ImportError(
+      `This account is not allowed. The server saw ${email}. Check that it matches the ALLOWED_EMAIL setting exactly.`,
+      "unauthorized",
+    );
   return { id: data.user.id, email: data.user.email ?? undefined };
 }
