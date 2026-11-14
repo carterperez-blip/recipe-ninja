@@ -16,16 +16,23 @@ export function AccountMenu() {
   );
 }
 
-/** Small footer line with who is signed in and a way to sign out (cloud mode only). */
+/** Footer line: a link to the backup page, and who is signed in with a way to sign out (cloud mode). */
 export function AccountFooter() {
   const auth = useAuth();
-  if (auth.status !== "signedIn") return null;
+  if (auth.status === "signedOut" || auth.status === "loading") return null;
   return (
     <footer className="mx-auto w-full max-w-5xl px-4 pb-8 pt-2 text-center text-sm text-muted">
-      Signed in as {auth.session.user.email} ·{" "}
-      <button onClick={() => void signOut()} className="underline">
-        Sign out
-      </button>
+      <Link href="/backup" className="underline">
+        Back up your recipes
+      </Link>
+      {auth.status === "signedIn" && (
+        <>
+          {" · "}Signed in as {auth.session.user.email} ·{" "}
+          <button onClick={() => void signOut()} className="underline">
+            Sign out
+          </button>
+        </>
+      )}
     </footer>
   );
 }
