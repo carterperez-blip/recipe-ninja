@@ -1,8 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { parseIngredientLine } from "@/lib/recipe/parse";
 import { rawIngredientText } from "@/lib/recipe/scale";
+import { deleteUploadedPhoto, isOwnPhoto, uploadRecipePhoto } from "@/lib/imageUpload";
 import { buildManualCredit, creditLabel } from "@/lib/recipe/credit";
 import { DEFAULT_SERVINGS, type ImageCredit, type Recipe } from "@/lib/recipe/types";
 import { PicturePicker } from "@/components/PicturePicker";
@@ -34,9 +35,54 @@ export function RecipeForm({ initial, onSaved }: { initial?: Recipe; onSaved?: (
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  /** Pictures uploaded during this edit and not yet saved, so replaced or abandoned ones can be cleaned up. */
+  const pending = useRef<string[]>([]);
 
   const lines = (s: string) => s.split("\n").map((l) => l.trim()).filter(Boolean);
   const parsed = lines(ingredientsText).map(parseIngredientLine);
+
+  function clearCredit() {
+    setImageCredit(null);
+    setCreditName("");
+    setCreditUrl("");
+    setCreditLicense("");
+  }
+
+  /** Drop a picture from this edit; if it was uploaded during this edit, delete the file too. */
+  function discard(url: string) {
+    if (pending.current.includes(url)) {
+      pending.current = pending.current.filter((u) => u !== url);
+      void deleteUploadedPhoto(url);
+    }
+  }
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow choosing the same file again
+    if (!file) return;
+    setUploading(true);
+    setUploadError("");
+    try {
+      const url = await uploadRecipePhoto(file);
+      discard(imageUrl.trim()); // replacing an earlier upload from this same edit
+      pending.current.push(url);
+      setImageUrl(url);
+      clearCredit(); // your own photo needs no credit
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "The upload did not work.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function cancel() {
+    const urls = pending.current;
+    pending.current = [];
+    await Promise.all(urls.map((u) => deleteUploadedPhoto(u)));
+    router.back();
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,6 +116,12 @@ export function RecipeForm({ initial, onSaved }: { initial?: Recipe; onSaved?: (
       tags: tagsText.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean),
       notes: notes.trim(),
       });
+      // delete uploads this edit no longer uses, and the old picture if it was replaced or removed
+      const keep = saved.imageUrl ?? "";
+      const stale = pending.current.filter((u) => u !== keep);
+      if (initial?.imageUrl && initial.imageUrl !== keep) stale.push(initial.imageUrl);
+      pending.current = [];
+      void Promise.all(stale.map((u) => deleteUploadedPhoto(u)));
       // Next keeps hidden pages alive, so clear this form before leaving it.
       setSaving(false);
       onSaved?.();
@@ -91,7 +143,8 @@ export function RecipeForm({ initial, onSaved }: { initial?: Recipe; onSaved?: (
           <label className={label} htmlFor="img">Picture URL</label>
           <input
             id="img"
-            value={imageUrl}
+            value={imageUrl.startsWith("data:") ? "Uploaded photo" : imageUrl}
+            readOnly={imageUrl.startsWith("data:")}
             onChange={(e) => {
               setImageUrl(e.target.value);
               setImageCredit(null); // a pasted link is no longer a Pexels / Unsplash photo
@@ -113,18 +166,19 @@ export function RecipeForm({ initial, onSaved }: { initial?: Recipe; onSaved?: (
               type="button"
               className="text-sm underline"
               onClick={() => {
+                discard(imageUrl.trim());
                 setImageUrl("");
-                setImageCredit(null);
-                setCreditName("");
-                setCreditUrl("");
-                setCreditLicense("");
+                clearCredit();
               }}
             >
               Remove picture
             </button>
           </div>
         )}
-        {imageUrl.trim() && !imageCredit && (
+        {imageUrl.trim() && !imageCredit && isOwnPhoto(imageUrl.trim()) && (
+          <p className="text-xs text-muted">Your own photo, so no credit is needed.</p>
+        )}
+        {imageUrl.trim() && !imageCredit && !isOwnPhoto(imageUrl.trim()) && (
           <fieldset className="space-y-2 rounded-2xl border border-line bg-surface p-3">
             <legend className="px-1 text-sm font-medium">Photo credit (optional)</legend>
             <p className="text-xs text-muted">Some pictures, such as Creative Commons ones, need the creator credited. It shows under the picture.</p>
@@ -135,16 +189,28 @@ export function RecipeForm({ initial, onSaved }: { initial?: Recipe; onSaved?: (
             </div>
           </fieldset>
         )}
-        <PicturePicker
-          defaultQuery={title}
-          onPick={(url, credit) => {
-            setImageUrl(url);
-            setImageCredit(credit);
-            setCreditName("");
-            setCreditUrl("");
-            setCreditLicense("");
-          }}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="cursor-pointer rounded-full bg-navy-soft px-4 py-1.5 text-sm font-medium focus-within:outline focus-within:outline-2 focus-within:outline-navy">
+            {uploading ? "Uploading…" : "Upload a photo"}
+            <input type="file" accept="image/*" className="sr-only" onChange={(e) => void onFile(e)} disabled={uploading} />
+          </label>
+          <PicturePicker
+            defaultQuery={title}
+            onPick={(url, credit) => {
+              discard(imageUrl.trim());
+              setImageUrl(url);
+              setImageCredit(credit);
+              setCreditName("");
+              setCreditUrl("");
+              setCreditLicense("");
+            }}
+          />
+        </div>
+        {uploadError && (
+          <p role="alert" className="rounded-xl bg-accent-soft px-3 py-2 text-sm">
+            {uploadError}
+          </p>
+        )}
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
@@ -202,7 +268,7 @@ export function RecipeForm({ initial, onSaved }: { initial?: Recipe; onSaved?: (
         >
           {saving ? "Saving…" : "Save recipe"}
         </button>
-        <button type="button" onClick={() => router.back()} className="rounded-full border border-line bg-surface px-5 py-2">
+        <button type="button" onClick={() => void cancel()} className="rounded-full border border-line bg-surface px-5 py-2">
           Cancel
         </button>
       </div>

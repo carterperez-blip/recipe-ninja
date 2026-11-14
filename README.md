@@ -3,7 +3,7 @@
 A personal recipe library for the browser and iPhone (install it from Safari with Share, then Add to Home Screen).
 
 - Save recipes from a link, pasted text or a photo (up to 3 photos of a page or card), or type them in
-- Find a picture from Pexels or Unsplash, with the photographer credited
+- A picture on every recipe: upload your own photo (shrunk in the browser, stored in your Supabase `recipe-images` bucket), find one from Pexels or Unsplash (photographer credited), or paste a link and add a photo credit (e.g. CC BY)
 - Ingredients and step-by-step instructions with a picture on every recipe
 - Serving scaler: every recipe opens at 2 people
 - Cook mode: full screen, one step at a time, screen kept awake

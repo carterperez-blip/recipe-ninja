@@ -10,6 +10,7 @@ import { convertTemperatures } from "@/lib/recipe/units";
 import { creditParts } from "@/lib/recipe/credit";
 import { DEFAULT_SERVINGS, type ImageCredit, type Recipe } from "@/lib/recipe/types";
 import { addRecipeToGrocery } from "@/lib/groceryStore";
+import { deleteUploadedPhoto } from "@/lib/imageUpload";
 import { deleteRecipe, patchRecipe, setUnitSystem, useHydrated, useRecipes, useUnitSystem } from "@/lib/store";
 
 export default function RecipePage() {
@@ -239,6 +240,7 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
             if (!confirm(`Delete "${recipe.title}"?`)) return;
             try {
               await deleteRecipe(recipe.id!);
+              void deleteUploadedPhoto(recipe.imageUrl); // also remove the stored picture, if it was an upload
               router.push("/");
             } catch (e) {
               alert(e instanceof Error ? e.message : "Could not delete the recipe.");
