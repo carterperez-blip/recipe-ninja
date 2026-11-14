@@ -19,8 +19,12 @@ export interface Step {
 
 export interface ImageCredit {
   name: string;
-  url: string;
-  source: "pexels" | "unsplash";
+  /** Link to the photo or the photographer's page. */
+  url?: string;
+  /** pexels / unsplash: picked with Find a picture. other: typed in for a pasted picture. */
+  source: "pexels" | "unsplash" | "other";
+  /** Licence for pasted pictures, e.g. "CC BY". */
+  license?: string;
 }
 
 export interface Recipe {

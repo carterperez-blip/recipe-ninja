@@ -7,7 +7,8 @@ import { PlanMenu } from "@/components/PlanMenu";
 import { RecipeImage } from "@/components/RecipeImage";
 import { displayIngredient, scaleFactor } from "@/lib/recipe/scale";
 import { convertTemperatures } from "@/lib/recipe/units";
-import { DEFAULT_SERVINGS, type Recipe } from "@/lib/recipe/types";
+import { creditParts } from "@/lib/recipe/credit";
+import { DEFAULT_SERVINGS, type ImageCredit, type Recipe } from "@/lib/recipe/types";
 import { addRecipeToGrocery } from "@/lib/groceryStore";
 import { deleteRecipe, patchRecipe, setUnitSystem, useHydrated, useRecipes, useUnitSystem } from "@/lib/store";
 
@@ -35,6 +36,23 @@ function RecipeLoader() {
   return <RecipeView key={recipe.id} recipe={recipe} />;
 }
 
+function PhotoCredit({ credit }: { credit: ImageCredit }) {
+  const c = creditParts(credit);
+  return (
+    <p className="px-5 pt-2 text-xs text-muted">
+      {c.prefix}
+      {c.url ? (
+        <a href={c.url} target="_blank" rel="noreferrer" className="underline">
+          {c.name}
+        </a>
+      ) : (
+        c.name
+      )}
+      {c.suffix}
+    </p>
+  );
+}
+
 function RecipeView({ recipe }: { recipe: Recipe }) {
   const router = useRouter();
   const system = useUnitSystem();
@@ -57,15 +75,7 @@ function RecipeView({ recipe }: { recipe: Recipe }) {
 
       <div className="overflow-hidden rounded-3xl border border-line bg-surface shadow-sm">
         <RecipeImage url={recipe.imageUrl} title={recipe.title} className="h-56 w-full sm:h-72" />
-        {recipe.imageUrl && recipe.imageCredit && (
-          <p className="px-5 pt-2 text-xs text-muted">
-            Photo by{" "}
-            <a href={recipe.imageCredit.url} target="_blank" rel="noreferrer" className="underline">
-              {recipe.imageCredit.name}
-            </a>{" "}
-            on {recipe.imageCredit.source === "pexels" ? "Pexels" : "Unsplash"}
-          </p>
-        )}
+        {recipe.imageUrl && recipe.imageCredit && <PhotoCredit credit={recipe.imageCredit} />}
         <div className="space-y-3 p-5">
           <div className="flex items-start justify-between gap-3">
             <h1 className="text-2xl font-bold">{recipe.title}</h1>

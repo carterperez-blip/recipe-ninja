@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { parseIngredientLine } from "@/lib/recipe/parse";
 import { rawIngredientText } from "@/lib/recipe/scale";
+import { buildManualCredit, creditLabel } from "@/lib/recipe/credit";
 import { DEFAULT_SERVINGS, type ImageCredit, type Recipe } from "@/lib/recipe/types";
 import { PicturePicker } from "@/components/PicturePicker";
 import { RecipeImage } from "@/components/RecipeImage";
@@ -14,7 +15,13 @@ export function RecipeForm({ initial, onSaved }: { initial?: Recipe; onSaved?: (
   const router = useRouter();
   const [title, setTitle] = useState(initial?.title ?? "");
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? "");
-  const [imageCredit, setImageCredit] = useState<ImageCredit | null>(initial?.imageCredit ?? null);
+  // credit from Find a picture (Pexels / Unsplash); a credit typed for a pasted picture lives in the fields below
+  const stock = initial?.imageCredit && initial.imageCredit.source !== "other" ? initial.imageCredit : null;
+  const typed = initial?.imageCredit?.source === "other" ? initial.imageCredit : null;
+  const [imageCredit, setImageCredit] = useState<ImageCredit | null>(stock);
+  const [creditName, setCreditName] = useState(typed?.name ?? "");
+  const [creditUrl, setCreditUrl] = useState(typed?.url ?? "");
+  const [creditLicense, setCreditLicense] = useState(typed?.license ?? "");
   const [sourceUrl, setSourceUrl] = useState(initial?.sourceUrl ?? "");
   const [servings, setServings] = useState(String(initial?.baseServings ?? DEFAULT_SERVINGS));
   const [prep, setPrep] = useState(initial?.prepMinutes?.toString() ?? "");
@@ -37,6 +44,15 @@ export function RecipeForm({ initial, onSaved }: { initial?: Recipe; onSaved?: (
     if (!title.trim()) return setError("Please give the recipe a title.");
     if (parsed.length === 0) return setError("Add at least one ingredient.");
     if (!(base > 0)) return setError("Servings must be a number above 0.");
+    let credit: ImageCredit | null = null;
+    if (imageUrl.trim()) {
+      if (imageCredit) credit = imageCredit;
+      else {
+        const m = buildManualCredit({ name: creditName, url: creditUrl, license: creditLicense });
+        if (m.error) return setError(m.error);
+        credit = m.credit;
+      }
+    }
     setSaving(true);
     setError("");
     try {
@@ -44,7 +60,7 @@ export function RecipeForm({ initial, onSaved }: { initial?: Recipe; onSaved?: (
       ...initial,
       title: title.trim(),
       imageUrl: imageUrl.trim() || null,
-      imageCredit: imageUrl.trim() ? imageCredit : null,
+      imageCredit: credit,
       sourceUrl: sourceUrl.trim() || null,
       baseServings: base,
       prepMinutes: prep ? Number(prep) : null,
@@ -78,7 +94,7 @@ export function RecipeForm({ initial, onSaved }: { initial?: Recipe; onSaved?: (
             value={imageUrl}
             onChange={(e) => {
               setImageUrl(e.target.value);
-              setImageCredit(null); // a pasted link is not a credited stock photo
+              setImageCredit(null); // a pasted link is no longer a Pexels / Unsplash photo
             }}
             placeholder="https://…"
           />
@@ -92,15 +108,41 @@ export function RecipeForm({ initial, onSaved }: { initial?: Recipe; onSaved?: (
         {imageUrl.trim() && (
           <div className="flex items-center gap-3">
             <RecipeImage url={imageUrl.trim()} title={title || "Recipe"} className="h-16 w-24 rounded-xl" />
-            {imageCredit && <p className="text-xs text-muted">Photo by {imageCredit.name} on {imageCredit.source === "pexels" ? "Pexels" : "Unsplash"}</p>}
-            <button type="button" className="text-sm underline" onClick={() => { setImageUrl(""); setImageCredit(null); }}>Remove picture</button>
+            {imageCredit && <p className="text-xs text-muted">{creditLabel(imageCredit)}</p>}
+            <button
+              type="button"
+              className="text-sm underline"
+              onClick={() => {
+                setImageUrl("");
+                setImageCredit(null);
+                setCreditName("");
+                setCreditUrl("");
+                setCreditLicense("");
+              }}
+            >
+              Remove picture
+            </button>
           </div>
+        )}
+        {imageUrl.trim() && !imageCredit && (
+          <fieldset className="space-y-2 rounded-2xl border border-line bg-surface p-3">
+            <legend className="px-1 text-sm font-medium">Photo credit (optional)</legend>
+            <p className="text-xs text-muted">Some pictures, such as Creative Commons ones, need the creator credited. It shows under the picture.</p>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <input aria-label="Photographer or creator" placeholder="Photographer or creator" value={creditName} onChange={(e) => setCreditName(e.target.value)} />
+              <input aria-label="Link to the photo page" placeholder="Link to the photo page" value={creditUrl} onChange={(e) => setCreditUrl(e.target.value)} />
+              <input aria-label="License" placeholder="License, e.g. CC BY" value={creditLicense} onChange={(e) => setCreditLicense(e.target.value)} />
+            </div>
+          </fieldset>
         )}
         <PicturePicker
           defaultQuery={title}
           onPick={(url, credit) => {
             setImageUrl(url);
             setImageCredit(credit);
+            setCreditName("");
+            setCreditUrl("");
+            setCreditLicense("");
           }}
         />
       </div>
